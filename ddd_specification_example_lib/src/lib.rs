@@ -1,22 +1,71 @@
-mod discount;
-mod product;
+struct Package<'a> {
+    colour: &'a str,
+    shape: &'a str
+}
 
-#[cfg(test)]
-mod tests {
-    use crate::product::{Product, ProductSpecification};
-    use crate::discount::DiscountedProductSpecification;
+trait PackageSpecification {
+    fn is_satisfied(&self, package: &Package) -> bool;
+}
 
-    #[test]
-    fn discounted_product_specification_should_be_specified_by_product_with_certain_ean_13() {
-        let product = Product::new(501235678900);
-        let specification = DiscountedProductSpecification::new();
-        assert_eq!(specification.is_satisfied_by(product), true);
+struct PackageColourSpecification<'a> {
+    expected_colour: &'a str
+}
+
+impl PackageSpecification for PackageColourSpecification<'_> {
+    fn is_satisfied(&self, package: &Package) -> bool {
+        package.colour == self.expected_colour
     }
+}
 
-    #[test]
-    fn discounted_product_specification_should_not_be_specified_by_other_product() {
-        let product = Product::new(501235678933);
-        let specification = DiscountedProductSpecification::new();
-        assert_eq!(specification.is_satisfied_by(product), false);
+struct PackageShapeSpecification<'a> {
+    expected_shape: &'a str
+}
+
+impl PackageSpecification for PackageShapeSpecification<'_> {
+    fn is_satisfied(&self, package: &Package) -> bool {
+        package.shape == self.expected_shape
     }
+}
+
+struct AndPackageSpecification<'a> {
+    left: &'a dyn PackageSpecification,
+    right: &'a dyn PackageSpecification
+}
+
+impl PackageSpecification for AndPackageSpecification<'_> {
+    fn is_satisfied(&self, package: &Package) -> bool {
+        self.left.is_satisfied(package) && self.right.is_satisfied(package)
+    }
+}
+
+#[test]
+fn should_be_possible_to_create_specification_for_red_oval_package() {
+    let red_oval_package = Package {
+        colour: "red",
+        shape: "oval"
+    };
+    let red_square_package = Package {
+        colour: "red",
+        shape: "square"
+    };
+    let green_oval_package = Package {
+        colour: "green",
+        shape: "oval"
+    };
+    let red_oval_package_specification = AndPackageSpecification {
+        left: &PackageColourSpecification { expected_colour: "red" },
+        right: &PackageShapeSpecification { expected_shape: "oval" }
+    };
+    assert_eq!(
+        red_oval_package_specification.is_satisfied(&red_oval_package),
+        true,
+    );
+    assert_eq!(
+        red_oval_package_specification.is_satisfied(&red_square_package),
+        false,
+    );
+    assert_eq!(
+        red_oval_package_specification.is_satisfied(&green_oval_package),
+        false,
+    );
 }
