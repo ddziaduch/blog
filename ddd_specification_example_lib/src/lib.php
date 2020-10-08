@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-class Package {
+class Package
+{
     public string $colour;
     public string $shape;
 
@@ -13,8 +14,9 @@ class Package {
     }
 }
 
-interface PackageSpecification {
-    public function isSatisfied(Package $package);
+interface PackageSpecification
+{
+    public function isSatisfied(Package $package): bool;
 }
 
 class PackageColourSpecification implements PackageSpecification
@@ -26,7 +28,7 @@ class PackageColourSpecification implements PackageSpecification
         $this->expectedColour = $expectedColour;
     }
 
-    public function isSatisfied(Package $package)
+    public function isSatisfied(Package $package): bool
     {
         return $package->colour === $this->expectedColour;
     }
@@ -41,7 +43,7 @@ class PackageShapeSpecification implements PackageSpecification
         $this->expectedShape = $expectedShape;
     }
 
-    public function isSatisfied(Package $package)
+    public function isSatisfied(Package $package): bool
     {
         return $package->shape === $this->expectedShape;
     }
@@ -60,30 +62,26 @@ class AndPackageSpecification implements PackageSpecification
         $this->right = $right;
     }
 
-    public function isSatisfied(Package $package)
+    public function isSatisfied(Package $package): bool
     {
         return $this->left->isSatisfied($package)
             && $this->right->isSatisfied($package);
     }
 }
 
-$redOvalPackage = new Package('red', 'oval');
-$redSquarePackage = new Package('red', 'square');
-$greenOvalPackage = new Package('green', 'oval');
-$redOvalPackageSpecification = new AndPackageSpecification(
-    new PackageColourSpecification('red'),
-    new PackageShapeSpecification('oval'),
-);
+function shouldBePossibleToCreateSpecificationForRedOvalPackage()
+{
+    $redOvalPackage = new Package('red', 'oval');
+    $redSquarePackage = new Package('red', 'square');
+    $greenOvalPackage = new Package('green', 'oval');
+    $redOvalPackageSpecification = new AndPackageSpecification(
+        new PackageColourSpecification('red'),
+        new PackageShapeSpecification('oval'),
+    );
 
-assert(
-    $redOvalPackageSpecification->isSatisfied($redOvalPackage) === true,
-    'should be possible to create specification for red oval package',
-);
-assert(
-    $redOvalPackageSpecification->isSatisfied($redSquarePackage) === false,
-    'should be possible to create specification for red oval package',
-);
-assert(
-    $redOvalPackageSpecification->isSatisfied($greenOvalPackage) === false,
-    'should be possible to create specification for red oval package',
-);
+    assert($redOvalPackageSpecification->isSatisfied($redOvalPackage) === true);
+    assert($redOvalPackageSpecification->isSatisfied($redSquarePackage) === false);
+    assert($redOvalPackageSpecification->isSatisfied($greenOvalPackage) === false);
+}
+
+shouldBePossibleToCreateSpecificationForRedOvalPackage();
